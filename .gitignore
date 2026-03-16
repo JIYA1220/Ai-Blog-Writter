@@ -1,0 +1,23 @@
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+venv/
+env/
+.venv/
+
+# PyCharm
+.idea/
+*.iml
+
+# Output blogs (optional — remove this line if you want to commit generated blogs)
+output/*.md
+
+# OS
+.DS_Store
+Thumbs.db
