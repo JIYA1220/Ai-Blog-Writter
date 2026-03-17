@@ -24,6 +24,7 @@ from agents.retriever import retriever_node
 from agents.planner import planner_node
 from agents.writer import dispatch_sections, section_writer_node
 from agents.reducer import reducer_node
+from agents.evaluator import evaluator_node
 
 load_dotenv()
 
@@ -42,6 +43,7 @@ def build_graph() -> StateGraph:
     graph.add_node("planner", planner_node)
     graph.add_node("section_writer", section_writer_node)  # parallel workers
     graph.add_node("reducer", reducer_node)
+    graph.add_node("evaluator", evaluator_node)
 
     # ── Wire the edges ──
 
@@ -73,8 +75,11 @@ def build_graph() -> StateGraph:
     # 5. section_writer → Reducer (all parallel workers fan-in here)
     graph.add_edge("section_writer", "reducer")
 
-    # 6. Reducer → END
-    graph.add_edge("reducer", END)
+    # 6. Reducer → Evaluator
+    graph.add_edge("reducer", "evaluator")
+
+    # 7. Evaluator → END
+    graph.add_edge("evaluator", END)
 
     # ── Compile the graph ──
     compiled = graph.compile()

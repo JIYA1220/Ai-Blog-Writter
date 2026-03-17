@@ -91,7 +91,7 @@ def dispatch_sections(state: AIBlogWriterState) -> List[Send]:
 # ─────────────────────────────────────────────────────────────
 # Section writer node — one instance per section
 # ─────────────────────────────────────────────────────────────
-def section_writer_node(state: SectionWorkerState) -> dict:
+async def section_writer_node(state: SectionWorkerState) -> dict:
     """
     Individual section writer. One of these runs per section, in parallel.
     Writes to 'written_sections' which uses operator.add as reducer.
@@ -117,7 +117,7 @@ def section_writer_node(state: SectionWorkerState) -> dict:
     )
 
     try:
-        response = llm.invoke(prompt)
+        response = await llm.ainvoke(prompt)
         content = response.content.strip()
         word_count = len(content.split())
 

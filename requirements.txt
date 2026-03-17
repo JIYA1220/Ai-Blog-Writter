@@ -1,0 +1,15 @@
+langgraph
+langchain
+langchain-openai
+langchain-google-genai
+langchain-ollama
+langsmith
+pydantic>=2.0.0
+python-dotenv
+tavily-python
+rich
+streamlit
+fastapi
+uvicorn
+pytest
+httpx

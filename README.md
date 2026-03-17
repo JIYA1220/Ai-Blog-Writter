@@ -1,141 +1,118 @@
-# AI Blog Writer — Agentic Blog Generation System
+# AI Blog Writer — Advanced Agentic Blog System
 
-> Production-ready blog writer built as a **stateful LangGraph DAG** — structured, validated, and parallelised.
+> A state-of-the-art blog writing system built as a **Stateful, Async LangGraph DAG** — featuring parallel execution, real-time grounding, and automated quality evaluation.
 
 ---
 
-## Architecture
+## 🚀 Advanced Architecture
 
 ```
 START
-  └─► ROUTER          (adaptive: retrieval vs pure generation)
-        ├─► RETRIEVER  (Tavily web search + deduplication)  ← if needed
-        └─► PLANNER    (structured BlogPlan with section goals + word budgets)
-              └─► DISPATCHER (fans out parallel writers via Send API)
-                    ├─► WRITER [section 0]  ┐
-                    ├─► WRITER [section 1]  ├─ run in PARALLEL
-                    ├─► WRITER [section 2]  │
-                    └─► WRITER [section N]  ┘
-                          └─► REDUCER (deterministic merge + Pydantic validation)
-                                └─► END (saves .md file to output/)
-```
-
----
-## Project Structure
-
-```
-blog_ai/
-├── main.py              ← Entry point (run this)
-├── graph.py             ← LangGraph DAG definition
-```,old_string:
-├── requirements.txt
-├── .env.example         ← Copy to .env and fill in keys
-│
-├── agents/
-│   ├── router.py        ← Decides retrieval vs generation
-│   ├── retriever.py     ← Tavily search + deduplication
-│   ├── planner.py       ← Structured blog plan
-│   ├── writer.py        ← Parallel section writers (Send API)
-│   └── reducer.py       ← Deterministic merger + file saver
-│
-├── schemas/
-│   └── models.py        ← Pydantic schemas (BlogPlan, SectionPlan, etc.)
-│
-├── utils/
-│   ├── llm.py           ← OpenRouter LLM client
-│   └── logger.py        ← Rich console logger
-│
-└── output/              ← Generated blogs saved here as .md
+  └─► ROUTER (Async)    ── Decide: Retrieval vs Generation
+        ├─► RETRIEVER   ── Tavily Search + Deduplication
+        └─► PLANNER     ── Structured BlogPlan (Section Goals)
+              └─► DISPATCHER ── Parallel Fan-Out (Send API)
+                    ├─► WRITER [Section 0] ┐
+                    ├─► WRITER [Section 1] ├─ Parallel Async
+                    └─► WRITER [Section N] ┘
+                          └─► REDUCER   ── Merge & Sort
+                                └─► EVALUATOR ── LLM-as-Judge (Scoring)
+                                      └─► END ── Save Markdown
 ```
 
 ---
 
-## Setup (PyCharm)
+## Key Advanced Features
 
-### Step 1 — Clone / open the project
-Open the `blog_ai/` folder in PyCharm.
+| Feature | Technical Implementation | Why it matters |
+|---|---|---|
+| **Async Orchestration** | `asyncio` + LangGraph `ainvoke` | High-concurrency support, non-blocking I/O |
+| **Parallel Writing** | LangGraph `Send` API | Section generation in parallel (Fast!) |
+| **Observability** | **LangSmith** Integration | Full trace analysis, cost tracking, debugging |
+| **Evaluation Loop** | **LLM-as-Judge** Node | Automated quality scoring (1-10) and feedback |
+| **Grounded Retrieval** | **Tavily AI** Search | Prevents hallucinations with real-world evidence |
+| **REST API** | **FastAPI** + Pydantic | Deployable as a backend microservice |
+| **Modern UI** | **Streamlit** | Interactive dashboard with past blog browser |
 
-### Step 2 — Create a virtual environment
-```
-PyCharm → Settings → Project → Python Interpreter → Add → Virtualenv
-```
-Or from terminal:
-```bash
-python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Mac/Linux
-```
+---
 
-### Step 3 — Install dependencies
+## 🛠️ Setup & Usage
+
+### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 4 — Set up your API keys
-```bash
-cp .env.example .env
+### 2. Configure Environment (`.env`)
+Copy `.env.example` to `.env` and fill in:
+- `GOOGLE_API_KEY` or `OPENROUTER_API_KEY`
+- `TAVILY_API_KEY` (Optional for web search)
+- **`LANGSMITH_API_KEY`** (Optional for tracing — highly recommended)
+
+### 3. Run the Application
+You have three ways to run the system:
+
+- **CLI Mode:**
+  ```bash
+  python main.py
+  ```
+- **Streamlit Dashboard (Best UI):**
+  ```bash
+  streamlit run app.py
+  ```
+- **API Server (Production):**
+  ```bash
+  python server.py
+  ```
+
+---
+
+## 🔬 Observability & Evaluation
+
+### LangSmith Tracing
+To enable full observability:
+1. Create an account at [smith.langchain.com](https://smith.langchain.com).
+2. Add your `LANGSMITH_API_KEY` to the `.env` file.
+3. Every run will be automatically traced, showing latency, token usage, and graph flow.
+
+### LLM-as-Judge
+The final node in the DAG is an **Evaluator**. It analyzes the finished blog against the requested topic, audience, and tone. It provides:
+- **Score (1-10):** A metric of overall quality.
+- **Reasoning:** Why the blog received that score.
+- **Suggestions:** Actionable feedback for manual polish.
+
+---
+
+## Project Structure
+
 ```
-Then open `.env` and fill in:
-
-| Variable | Where to get it | Free? |
-|---|---|---|
-| `OPENROUTER_API_KEY` | https://openrouter.ai/keys | ✅ Free account |
-| `TAVILY_API_KEY` | https://app.tavily.com | ✅ Free 1000 searches/mo |
-
-### Step 5 — Choose your model (in .env)
-```
-# FREE models (no cost):
-MODEL_NAME=meta-llama/llama-3.1-8b-instruct:free
-MODEL_NAME=mistralai/mistral-7b-instruct:free
-
-# Paid (better quality):
-MODEL_NAME=openai/gpt-4o-mini
-MODEL_NAME=openai/gpt-4o
-```
-
-### Step 6 — Run
-```bash
-python main.py
+blog_ai/
+├── main.py              ← Async Entry point
+├── server.py            ← FastAPI REST API
+├── app.py               ← Streamlit Dashboard
+├── graph.py             ← LangGraph DAG definition
+├── requirements.txt     ← Dependencies
+│
+├── agents/
+│   ├── router.py        ← Decides retrieval vs generation (Async)
+│   ├── retriever.py     ← Tavily search + deduplication (Async)
+│   ├── planner.py       ← Structured blog plan (Async)
+│   ├── writer.py        ← Parallel section writers (Async)
+│   ├── reducer.py       ← Deterministic merger + file saver (Async)
+│   └── evaluator.py     ← LLM-as-Judge editor (Async)
+│
+├── schemas/
+│   └── models.py        ← Pydantic schemas (BlogPlan, Evaluation, etc.)
+│
+├── utils/
+│   ├── llm.py           ← LLM client + LangSmith config
+│   └── logger.py        ← Rich console logger
+│
+└── output/              ← Generated blogs saved here
 ```
 
 ---
 
-## What happens when you run it
+## RESUME POSITIONING (For MTech Freshers)
 
-1. **Router** analyses your topic → decides if web search is needed
-2. **Retriever** (if needed) → searches Tavily, deduplicates 6 evidence snippets
-3. **Planner** → creates structured plan: section goals, constraints, word budgets
-4. **Dispatcher** → fans out one writer per section (run in parallel)
-5. **Writers** → each section written independently, simultaneously
-6. **Reducer** → sorts by section_id, assembles markdown, validates with Pydantic
-7. **Output** → saved to `output/your_topic.md`
-
----
-
-## Key concepts demonstrated
-
-| Concept | Where | Why it matters |
-|---|---|---|
-| Stateful DAG | `graph.py` | Explicit state = debuggable system |
-| Conditional routing | `router.py` | Adaptive, not hardcoded |
-| Deduplication | `retriever.py` | Grounded, non-redundant evidence |
-| Structured planning | `planner.py` | Writers follow a contract, not free-form |
-| Parallel execution | `writer.py` (Send API) | Scale without waiting |
-| Deterministic merge | `reducer.py` | Consistent ordering every time |
-| Schema validation | `schemas/models.py` | Nothing malformed leaks through |
-
----
-
-## Troubleshooting
-
-**`ValueError: OPENROUTER_API_KEY not set`**
-→ Make sure `.env` exists and the key is filled in (not the placeholder text)
-
-**LLM returns bad JSON**
-→ Normal occasionally — the system has fallback handlers at every node
-
-**Tavily returns no results**
-→ System degrades gracefully to pure generation — still works
-
-**Rate limit errors**
-→ Reduce `MAX_CONCURRENCY=1` in `.env` for free tier models
+**"Built an advanced agentic blog generation system using LangGraph with stateful async DAG orchestration, parallel section writing via the Send API, and RAG-based fact grounding through Tavily. Implemented an LLM-as-judge evaluation loop for automated quality scoring and LangSmith tracing for full system observability."**

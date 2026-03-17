@@ -52,7 +52,7 @@ Return ONLY valid JSON in this exact format:
 """
 
 
-def planner_node(state: AIBlogWriterState) -> dict:
+async def planner_node(state: AIBlogWriterState) -> dict:
     """
     Planner Node — creates the structured BlogPlan.
     This plan is the contract each parallel worker follows.
@@ -88,19 +88,19 @@ def planner_node(state: AIBlogWriterState) -> dict:
     )
 
     try:
-        response = llm.invoke(prompt)
+        response = await llm.ainvoke(prompt)
         raw = response.content.strip()
 
         # Clean markdown fences
-        if "```" in raw:
-            parts = raw.split("```")
-            for part in parts:
-                part = part.strip()
-                if part.startswith("json"):
-                    part = part[4:].strip()
-                if part.startswith("{"):
-                    raw = part
-                    break
+        if raw.startswith("```"):
+            lines = raw.splitlines()
+            if lines[0].startswith("```"):
+                raw = "\n".join(lines[1:-1])
+        raw = raw.strip()
+
+        # Handle case where model might put 'json' at the start
+        if raw.startswith("json"):
+            raw = raw[4:].strip()
 
         data = json.loads(raw)
 

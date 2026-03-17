@@ -12,6 +12,12 @@ from langchain_ollama import ChatOllama
 
 load_dotenv()
 
+# Enable LangSmith Tracing if API key is present
+if os.getenv("LANGSMITH_API_KEY"):
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+    os.environ["LANGCHAIN_PROJECT"] = os.getenv("LANGSMITH_PROJECT", "ai-blog-writer")
+
 
 def get_llm(temperature: float = 0.7):
     """

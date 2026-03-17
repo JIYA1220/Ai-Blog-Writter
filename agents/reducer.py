@@ -11,7 +11,7 @@ from utils.logger import log_stage, log_info, log_success, log_warning, log_fina
 from schemas.models import WrittenSection, FinalBlog, AIBlogWriterState
 
 
-def reducer_node(state: AIBlogWriterState) -> dict:
+async def reducer_node(state: AIBlogWriterState) -> dict:
     """
     Reducer Node — final step in the DAG.
     Collects all written sections, sorts them, merges into one blog.

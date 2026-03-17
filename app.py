@@ -60,6 +60,8 @@ with st.container(border=True):
         ])
         start_btn = st.button("Generate Blog", use_container_width=True, type="primary")
 
+import asyncio
+
 # ── Execution Logic ──
 if start_btn:
     if not topic or not audience:
@@ -75,6 +77,7 @@ if start_btn:
             "blog_plan": None,
             "written_sections": [],
             "final_blog": None,
+            "evaluation": None,
             "errors": [],
         }
         
@@ -83,46 +86,18 @@ if start_btn:
         status_text = st.empty()
         
         try:
-            # Stage 1: Router
-            status_text.text("Analyzing topic (Routing)...")
-            progress_bar.progress(15)
-            
-            # Since LangGraph execution is typically a single call, 
-            # we'll use streaming if possible, but for simplicity here 
-            # we invoke the graph and show progress updates.
-            
             start_time = time.time()
             
-            # Use streaming to get updates
-            final_state = None
-            for event in ai_blog_writer_graph.stream(inputs, config={"recursion_limit": 50}):
-                # Update progress based on node events
-                for node_name, state_update in event.items():
-                    if node_name == "router":
-                        status_text.text("Researching (Retriever)..." if state_update.get("needs_retrieval") else "Planning (Planner)...")
-                        progress_bar.progress(30)
-                    elif node_name == "retriever":
-                        status_text.text("Planning (Planner)...")
-                        progress_bar.progress(50)
-                    elif node_name == "planner":
-                        status_text.text("Writing Sections (Parallel Writers)...")
-                        progress_bar.progress(70)
-                    elif node_name == "section_writer":
-                        # Parallel workers don't stream one by one in a way that's easy to count here 
-                        # without more complex logic, but we can show they are working.
-                        status_text.text("Finalizing sections...")
-                        progress_bar.progress(85)
-                    elif node_name == "reducer":
-                        status_text.text("Assembling final blog...")
-                        progress_bar.progress(95)
-                
-                # Keep track of latest state
-                final_state = event
+            # Since Streamlit doesn't support async naturally in this context,
+            # we use asyncio.run to execute the async pipeline.
             
-            # Final result is in the last emitted event's state
-            # LangGraph stream emits {node: update}
-            # To get the full final state, we should invoke or accumulate
-            final_state = ai_blog_writer_graph.invoke(inputs)
+            status_text.text("Running pipeline (Async)...")
+            progress_bar.progress(50)
+            
+            final_state = asyncio.run(ai_blog_writer_graph.ainvoke(
+                inputs, 
+                config={"recursion_limit": 50, "max_concurrency": 4}
+            ))
             
             elapsed = time.time() - start_time
             progress_bar.progress(100)
@@ -132,6 +107,17 @@ if start_btn:
             if final_blog:
                 st.divider()
                 st.subheader(final_blog.title)
+                
+                # Show Evaluation in an expander
+                eval_data = final_state.get("evaluation")
+                if eval_data:
+                    with st.expander(f"Editor's Evaluation (Score: {eval_data.score}/10)", expanded=eval_data.is_pass):
+                        st.write(f"**Reasoning:** {eval_data.reasoning}")
+                        if eval_data.suggestions:
+                            st.write("**Suggestions for improvement:**")
+                            for s in eval_data.suggestions:
+                                st.write(f"- {s}")
+                
                 st.markdown(final_blog.full_content)
                 
                 # Download Button

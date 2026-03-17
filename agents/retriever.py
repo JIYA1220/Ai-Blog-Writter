@@ -13,6 +13,8 @@ from schemas.models import RetrievalResult, AIBlogWriterState
 load_dotenv()
 
 
+import asyncio
+
 def _get_tavily_client():
     """Returns a Tavily client if API key is available."""
     api_key = os.getenv("TAVILY_API_KEY")
@@ -41,7 +43,7 @@ def _deduplicate(snippets: list[str]) -> list[str]:
     return unique[:6]  # Cap at 6 snippets for context efficiency
 
 
-def retriever_node(state: AIBlogWriterState) -> dict:
+async def retriever_node(state: AIBlogWriterState) -> dict:
     """
     Retriever Node — only runs when router says needs_retrieval=True.
     Searches Tavily, deduplicates results, returns grounded evidence.
@@ -62,7 +64,9 @@ def retriever_node(state: AIBlogWriterState) -> dict:
         return {"retrieval_results": result, "errors": []}
 
     try:
-        response = client.search(
+        # Use to_thread for the blocking network call
+        response = await asyncio.to_thread(
+            client.search,
             query=topic,
             search_depth="advanced",
             max_results=8,

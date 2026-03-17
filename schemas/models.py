@@ -72,7 +72,18 @@ class FinalBlog(BaseModel):
 
 
 # ─────────────────────────────────────────────
-# 6. LANGGRAPH STATE — Shared state across all nodes
+# 6. EVALUATION — Output of the Evaluator node
+# ─────────────────────────────────────────────
+class BlogEvaluation(BaseModel):
+    """LLM-as-judge evaluation of the blog."""
+    score: int = Field(..., description="Score from 1 to 10")
+    reasoning: str = Field(..., description="Explanation for the score")
+    suggestions: List[str] = Field(default_factory=list, description="Ways to improve")
+    is_pass: bool = Field(default=True)
+
+
+# ─────────────────────────────────────────────
+# 7. LANGGRAPH STATE — Shared state across all nodes
 # ─────────────────────────────────────────────
 from typing import TypedDict
 
@@ -97,6 +108,9 @@ class AIBlogWriterState(TypedDict):
 
     # Final output
     final_blog: Optional[FinalBlog]
+
+    # Evaluation loop
+    evaluation: Optional[BlogEvaluation]
 
     # Error tracking
     errors: Annotated[List[str], operator.add]

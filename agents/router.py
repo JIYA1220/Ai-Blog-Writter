@@ -35,7 +35,7 @@ Respond ONLY with valid JSON:
 """
 
 
-def router_node(state: AIBlogWriterState) -> dict:
+async def router_node(state: AIBlogWriterState) -> dict:
     """
     Router Node — first node in the DAG.
     Sets state['needs_retrieval'] = True or False.
@@ -59,15 +59,19 @@ def router_node(state: AIBlogWriterState) -> dict:
     )
 
     try:
-        response = llm.invoke(prompt)
+        response = await llm.ainvoke(prompt)
         raw = response.content.strip()
 
         # Strip markdown code fences if model adds them
         if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
+            lines = raw.splitlines()
+            if lines[0].startswith("```"):
+                raw = "\n".join(lines[1:-1])
         raw = raw.strip()
+
+        # Handle case where model might put 'json' at the start
+        if raw.startswith("json"):
+            raw = raw[4:].strip()
 
         decision = json.loads(raw)
         needs_retrieval = bool(decision.get("needs_retrieval", False))
