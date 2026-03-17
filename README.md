@@ -59,9 +59,7 @@ Run it via **CLI**, **Streamlit UI**, or a **FastAPI server**.
 
 ##  Demo Video
 
-> Add your demo video file to the repo (recommended path: `assets/demo.mp4`), then this embed will work:
-
-<video src="assets/demo.mp4" controls width="100%"></video>
+ **Watch / Download:** [demo.mp4](assets/demo.mp4)
 
 
 ---
